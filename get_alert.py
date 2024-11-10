@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import set_severity
+import get_progress
 
 class SimpleAlertHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -33,8 +33,8 @@ class SimpleAlertHandler(BaseHTTPRequestHandler):
         else:
             print("これはcriticalのアラートグループではない")
         print("=================================")
-        #set_severity.pyを実行
-        set_severity.to_evaluate_alert(groups)
+        #get_progress.pyを実行
+        progress_score = get_progress.get_progress()
         
         groups = [] # リスト内容のリセット
 
