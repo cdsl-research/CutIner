@@ -49,6 +49,7 @@ def calc_before_usage(used_VM_datas_every_PM, before_time):
         before_usage = rounding_off(sum(used_time_list) / len(used_time_list)) # 物理サーバの直前使用度の算出
         before_usage_every_PM[hostname] = before_usage # 出力結果に追加
         
+    print(before_usage_every_PM)
     return before_usage_every_PM
 
             

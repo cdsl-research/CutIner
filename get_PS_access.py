@@ -67,7 +67,7 @@ def get_PS_access(IPaddress, alert_time):
                 ## 「logged」という文字列があった行を除外
                 if line_components[8] == "logged":
                     continue
-                
+                                
                 ## 使用終了時刻を計算する
                 use_start = datetime.datetime.strptime(str(year) + "-" + line_components[4] + "-" + line_components[5] + " " + line_components[6], "%Y-%b-%d %H:%M") # 使用開始時刻
                 use_time = re.sub("[()\n]", "", line_components[9]) # 使用時間の値を適切なフォーマットにする               
@@ -76,25 +76,44 @@ def get_PS_access(IPaddress, alert_time):
                     idx = use_time.find("+") # +があるindexを取得
                     over_day = int(use_time[:idx]) # +までの文字列を取得し，int型に変換
                     use_time = use_time.split("+")[1] # "+"で分割してリストにしたあと，分割した右側の要素をuse_timeとする         
-                use_time = use_time.split(":") # use_timeは文字列なので，":"で分割してリストにする               
+                use_time = use_time.split(":") # use_timeは文字列なので，":"で分割してリストにする   
                 use_end = use_start + datetime.timedelta(days=over_day) # use_start(日付型)に，timedeltaメソッドでover_dayを足す
                 use_end = use_end + datetime.timedelta(hours=int(use_time[0])) # use_start(日付型)に，timedeltaメソッドでuse_time[0](使用時間)を足す
-                use_end = use_start + datetime.timedelta(minutes=int(use_time[1])) # use_start(日付型)に，timedeltaメソッドでuse_time[1](使用分)を足す
+                use_end = use_end + datetime.timedelta(minutes=int(use_time[1])) # use_start(日付型)に，timedeltaメソッドでuse_time[1](使用分)を足す
                                                 
                 ## 障害発生時刻の直前かどうか判定
                 before_alert_time_start = alert_time - datetime.timedelta(minutes=get_start_time) # 直前と定義された時間範囲の開始時刻
                 before_alert_time_end = alert_time - datetime.timedelta(minutes=get_end_time) # 直前と定義された時間範囲の終了時刻
-                if (before_alert_time_start < use_end) & (before_alert_time_end > use_end): #use_endが直前と定義された時間範囲に入っていたら
-                    if before_alert_time_start > use_start: # 直前と定義された時間範囲の開始時刻よりも前から使用されていたら
-                        used_time = use_end - before_alert_time_start # 使用終了時刻から直前と定義された時間範囲の開始時刻引き，差分を出す
-                    else: # 直前と定義された時間範囲の開始時刻よりも後から使用されていたら
-                        used_time = use_end - use_start # 使用開始時刻と使用終了時刻の差分を出す   
+                
+                # 直前と定義された時間範囲内でVMの使用があったら(以下の4パターンになっていたら)
+                # 時間の流れ：   使用開始時刻 --- 直前の開始 --- 使用終了時刻 --- 直前の終了
+                # 時間の流れ：   直前の開始 --- 使用開始時刻 --- 使用終了時刻 --- 直前の終了
+                # 時間の流れ：   使用開始時刻 --- 直前の開始 --- 直前の終了 --- 使用終了時刻
+                # 時間の流れ：   直前の開始 --- 使用開始時刻 --- 直前の終了 --- 使用終了時刻
+                if ( (use_start < before_alert_time_start) & ((before_alert_time_start < use_end) & (use_end < before_alert_time_end)) ): # 時間の流れ：   使用開始時刻 --- 直前の開始 --- 使用終了時刻 --- 直前の終了
+                    used_time = use_end - before_alert_time_start
                     used_time = int(used_time.seconds / 60) # 差分を秒数で出し，それを60で割ることで分単位に直す
                     used_VM_datas[vm_hostname] = used_time # そのVMの使用時間をused_timeに設定する
+                    print(f"パターン1, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用
                     break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける
-                    
-                                                    
-                        
+                elif ( ((before_alert_time_start < use_start) & (use_start < before_alert_time_end)) & ((before_alert_time_start < use_end) & (use_end < before_alert_time_end)) ): # 時間の流れ：   直前の開始 --- 使用開始時刻 --- 使用終了時刻 --- 直前の終了
+                    used_time = use_end - use_start
+                    used_time = int(used_time.seconds / 60) # 差分を秒数で出し，それを60で割ることで分単位に直す
+                    used_VM_datas[vm_hostname] = used_time # そのVMの使用時間をused_timeに設定する
+                    print(f"パターン2, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用
+                    break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける
+                elif ( (use_start < before_alert_time_start) & (before_alert_time_end < use_end) ): # 時間の流れ：   使用開始時刻 --- 直前の開始 --- 直前の終了 --- 使用終了時刻
+                    used_time = before_alert_time_end - before_alert_time_start
+                    used_time = int(used_time.seconds / 60) # 差分を秒数で出し，それを60で割ることで分単位に直す
+                    used_VM_datas[vm_hostname] = used_time # そのVMの使用時間をused_timeに設定する
+                    print(f"パターン3, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用
+                    break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける
+                elif ( ((before_alert_time_start < use_start) & (use_start < before_alert_time_end)) & (before_alert_time_end < use_end) ): # 時間の流れ：   直前の開始 --- 使用開始時刻 --- 直前の終了 --- 使用終了時刻
+                    used_time = before_alert_time_end - use_start
+                    used_time = int(used_time.seconds / 60) # 差分を秒数で出し，それを60で割ることで分単位に直す
+                    used_VM_datas[vm_hostname] = used_time # そのVMの使用時間をused_timeに設定する
+                    print(f"パターン4, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用
+                    break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける  
                     
     print(f"アラート発生時刻：{alert_time}")
     print(used_VM_datas)
@@ -104,4 +123,4 @@ def get_PS_access(IPaddress, alert_time):
     
 ## デバッグ用
 if __name__ == "__main__":
-    get_PS_access("192.168.100.21", "2024-10-07 18:32:00")
+    get_PS_access("192.168.100.21", "2024-10-25 16:30:00")
