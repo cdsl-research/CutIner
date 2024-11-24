@@ -14,7 +14,7 @@ def push_alert(alert_time, alert_datas, priority_datas):
                 - priority (int): 優先度
     """
 
-    webhook_url = "https://hooks.slack.com/services/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"
+    webhook_url = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     
     ## ホスト名とIPアドレスの対応を保持した辞書
     hostnames = {"192.168.100.21":"plum",
