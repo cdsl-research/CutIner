@@ -63,9 +63,10 @@ python3 get_PS_access.py
 ### 実行結果
 ```テスト実行の結果
 c0a21030@c0a21030-implement:~/develop2$ python3 get_PS_access.py 
-パターン3, 使用時間：15, 使用開始時刻：2024-10-25 15:13:00, 使用終了時刻：2024-10-25 23:05:00
-アラート発生時刻：2024-10-25 16:30:00
-{'c0a21099-website-1005': 0, 'c0a21134': 0, 'c0a21134-tool-setup': 0, 'c0a21030-monitoring-mp': 15, 'c0a21099-website-1006': 0, 'outside-prometheus-ww3': 0, 'c0a21147-swipe': 0, 'outside-prometheus-ww2': 0}
+パターン1, 使用時間：10, 使用開始時刻：2024-11-25 21:18:00, 使用終了時刻：2024-11-25 22:49:00
+パターン4, 使用時間：2, 使用開始時刻：2024-11-25 22:52:00, 使用終了時刻：2024-11-25 22:55:00
+アラート発生時刻：2024-11-25 22:57:00
+{'c0a21030-outside-site-test-worker2': 0, 'c0a21030-outside-site-test-worker1': 0, 'c0a21030-monitoring-mp': 10, 'c0a21030-outside-site-test-master': 0, 'c0a21030-outside-site-test-nfs': 2}
 ```
 
 ## calc_before_usage.py
