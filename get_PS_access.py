@@ -32,9 +32,10 @@ def get_PS_access(IPaddress, alert_time):
     get_start_time = 18 # アラート発生時刻から何分前を取得開始時間とするのか
     get_end_time = 3 # アラート発生時刻から何分前を取得終了時間とするのか
     before_time = get_start_time - get_end_time
-    data_location = f"/home/c0a21030/develop2/log_Box/{hostname.capitalize()}" # VMが使用されていた時間のデータが保存されたディレクトリ
+    data_location = f"/home/c0a21030/develop2/last_datas/{hostname.capitalize()}" # VMが使用されていた時間のデータが保存されたディレクトリ
     files = [] # VMのホスト名の後ろにLASTとついているファイル名のリスト
     alert_time = datetime.datetime.strptime(alert_time, "%Y-%m-%d %H:%M:%S") # アラート発生時刻を日付型に変換
+    alert_time = alert_time + datetime.timedelta(hours=9) # alert_timeはUNIX時間なので9時間足して日本時間にする
     year = alert_time.year #アラート発生時刻の年
     use_end = "" # 日付型で，VMの使用を終了した時間
     used_time = "" # 障害発生時刻の直前に使われていた時間
@@ -113,7 +114,8 @@ def get_PS_access(IPaddress, alert_time):
                     used_time = int(used_time.seconds / 60) # 差分を秒数で出し，それを60で割ることで分単位に直す
                     used_VM_datas[vm_hostname] = used_time # そのVMの使用時間をused_timeに設定する
                     print(f"パターン4, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用
-                    break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける  
+                    break # 障害発生時刻の直前の使用時間を取得できたのでfor分を抜ける
+                #print(f"パターン5, 使用時間：{used_time}, 使用開始時刻：{use_start}, 使用終了時刻：{use_end}") # デバック用  
                     
     print(f"アラート発生時刻：{alert_time}")
     print(used_VM_datas)
@@ -123,4 +125,4 @@ def get_PS_access(IPaddress, alert_time):
     
 ## デバッグ用
 if __name__ == "__main__":
-    get_PS_access("192.168.100.21", "2024-10-25 16:30:00")
+    get_PS_access("192.168.100.21", "2024-11-25 13:57:00")
