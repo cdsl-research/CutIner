@@ -14,29 +14,53 @@ python3 get_alert.py
 
 このコマンドでプログラムを実行できます．
 
-アラートを取得するためには，Alertmanager側で以下のように設定を行う必要があります．
+アラートを取得するためには，Alertmanager側で以下のようにwebhook-trouble-handlerをreceiverに指定する必要があります．
 
-```
+```Alertmanager_config.yaml
+global:
+  resolve_timeout: 1m
+
+inhibit_rules:
+  - equal:
+      - namespace
+      - alertname
+    source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity =~ warning|info|attention  # 新しい優先度 'attention' を追加
+  - equal:
+      - namespace
+      - alertname
+    source_matchers:
+      - severity = warning
+    target_matchers:
+      - severity =~ info|attention
+  - equal:
+      - namespace
+    source_matchers:
+      - alertname = InfoInhibitor
+    target_matchers:
+      - severity = info
+  - target_matchers:
+      - alertname = InfoInhibitor
+
+### レシーバーにwebhook-trouble-handlerを定義
 receivers:
-- name: 'webhook-trouble-handler'
-  webhook_configs:
-    - url: 'http://<プログラムを実行するノードのIPアドレスまたはhostname>:9083'
-      send_resolved: true
-
+  - name: 'webhook-trouble-handler'
+    webhook_configs:
+      - url: 'http://<アラートを受け取るノードのホスト名またはIPアドレス>:9083'
+        send_resolved: true
+  
 route:
   group_by:
-  - severity
-  group_interval: 1m
-  group_wait: 30s
-  receiver: "webhook-trouble-handler"
-  repeat_interval: 1m
-  routes:
-  - match:
-      alertname: DeadMansSwitch
-    receiver: webhook-trouble-handler
-  - continue: true
-    match: null
-    receiver: webhook-trouble-handler
+    - severity
+  group_interval: 10m
+  group_wait: 1m
+  repeat_interval: 5m
+  receiver: webhook-trouble-handler # レシーバーにwebhook-trouble-handlerを指定
+
+templates:
+  - /etc/alertmanager/config/*.tmpl
 ```
 
 ### 実行結果
